@@ -7,8 +7,8 @@ import getConfig from './config'
 const { networkId } = getConfig(process.env.NODE_ENV || 'development')
 
 export default function App() {
-  // use React Hooks to store greeting in component state
-  const [greeting, set_greeting] = React.useState()
+  // use React Hooks to store content_hash in component state
+  const [content_hash, set_content_hash] = React.useState()
 
   // when the user has not yet interacted with the form, disable the button
   const [buttonDisabled, setButtonDisabled] = React.useState(true)
@@ -24,9 +24,9 @@ export default function App() {
       if (window.walletConnection.isSignedIn()) {
 
         // window.contract is set by initContract in index.js
-        window.contract.get_greeting({ account_id: window.accountId })
-          .then(greetingFromContract => {
-            set_greeting(greetingFromContract)
+        window.contract.get_content_hash({ account_id: window.accountId })
+          .then(contentHashFromContract => {
+            set_content_hash(contentHashFromContract)
           })
       }
     },
@@ -41,19 +41,10 @@ export default function App() {
   if (!window.walletConnection.isSignedIn()) {
     return (
       <main>
-        <h1>Welcome to NEAR!</h1>
+        <h1>NEAR.link</h1>
         <p>
-          To make use of the NEAR blockchain, you need to sign in. The button
+          To make use of the NEAR.link, you need to sign in. The button
           below will sign you in using NEAR Wallet.
-        </p>
-        <p>
-          By default, when your app runs in "development" mode, it connects
-          to a test network ("testnet") wallet. This works just like the main
-          network ("mainnet") wallet, but the NEAR Tokens on testnet aren't
-          convertible to other currencies – they're just for testing!
-        </p>
-        <p>
-          Go ahead and click the button below to try it out:
         </p>
         <p style={{ textAlign: 'center', marginTop: '2.5em' }}>
           <button onClick={login}>Sign in</button>
@@ -76,19 +67,19 @@ export default function App() {
           event.preventDefault()
 
           // get elements from the form using their id attribute
-          const { fieldset, greeting } = event.target.elements
+          const { fieldset, content_hash } = event.target.elements
 
           // hold onto new user-entered value from React's SynthenticEvent for use after `await` call
-          const newGreeting = greeting.value
+          const newContentHash = content_hash.value
 
           // disable the form while the value gets updated on-chain
           fieldset.disabled = true
 
           try {
             // make an update call to the smart contract
-            await window.contract.set_greeting({
-              // pass the value that the user entered in the greeting field
-              message: newGreeting
+            await window.contract.set_content_hash({
+              // pass the value that the user entered in the content_hash field
+              content_hash: newContentHash
             })
           } catch (e) {
             alert(
@@ -102,8 +93,8 @@ export default function App() {
             fieldset.disabled = false
           }
 
-          // update local `greeting` variable to match persisted value
-          set_greeting(newGreeting)
+          // update local `content_hash` variable to match persisted value
+          set_content_hash(newContentHash)
 
           // show Notification
           setShowNotification(true)
@@ -116,7 +107,7 @@ export default function App() {
         }}>
           <fieldset id="fieldset">
             <label
-              htmlFor="greeting"
+              htmlFor="content_hash"
               style={{
                 display: 'block',
                 color: 'var(--gray)',
@@ -128,9 +119,9 @@ export default function App() {
             <div style={{ display: 'flex' }}>
               <input
                 autoComplete="off"
-                defaultValue={greeting}
-                id="greeting"
-                onChange={e => setButtonDisabled(e.target.value === greeting)}
+                defaultValue={content_hash}
+                id="content_hash"
+                onChange={e => setButtonDisabled(e.target.value === content_hash)}
                 style={{ flex: 1 }}
               />
               <button
@@ -157,7 +148,7 @@ function Notification() {
         {window.accountId}
       </a>
       {' '/* React trims whitespace around tags; insert literal space character when needed */}
-      called method: 'set_greeting' in contract:
+      called method: 'set_content_hash' in contract:
       {' '}
       <a target="_blank" rel="noreferrer" href={`${urlPrefix}/${window.contract.contractId}`}>
         {window.contract.contractId}

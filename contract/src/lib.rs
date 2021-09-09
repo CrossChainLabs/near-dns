@@ -1,65 +1,138 @@
 /*
- * This is an example of a Rust smart contract with two simple, symmetric functions:
- *
- * 1. set_greeting: accepts a greeting, such as "howdy", and records it for the user (account_id)
- *    who sent the request
- * 2. get_greeting: accepts an account_id and returns the greeting saved for it, defaulting to
- *    "Hello"
- *
- * Learn more about writing NEAR smart contracts with Rust:
- * https://github.com/near/near-sdk-rs
- *
+ * NEAR DNS
  */
 
-// To conserve gas, efficient serialization is achieved through Borsh (http://borsh.io/)
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::wee_alloc;
 use near_sdk::{env, near_bindgen};
-use std::collections::HashMap;
+use near_sdk::collections::UnorderedMap;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-// Structs in Rust are similar to other languages, and may include impl keyword as shown below
-// Note: the names of the structs are not important when calling the smart contract, but the function names are
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct Welcome {
-    records: HashMap<String, String>,
+pub struct NearDns {
+    a_records: UnorderedMap<String, String>,
+    aaaa_records: UnorderedMap<String, String>,
+    contenthash_records: UnorderedMap<String, String>,
+    txt_records: UnorderedMap<String, String>
 }
 
 #[near_bindgen]
-impl Welcome {
-    pub fn set_greeting(&mut self, message: String) {
-        let account_id = env::signer_account_id();
-
-        // Use env::log to record logs permanently to the blockchain!
-        env::log(format!("Saving greeting '{}' for account '{}'", message, account_id,).as_bytes());
-
-        self.records.insert(account_id, message);
+impl NearDns {
+    #[init]
+    pub fn new() -> Self {
+        assert!(!env::state_exists(), "The NEAR_DNS is already initialized");
+        Self {
+            a_records: UnorderedMap::new(b"a".to_vec()),
+            aaaa_records: UnorderedMap::new(b"a".to_vec()),
+            contenthash_records: UnorderedMap::new(b"a".to_vec()),
+            txt_records: UnorderedMap::new(b"a".to_vec())
+        }
     }
 
-    // `match` is similar to `switch` in other languages; here we use it to default to "Hello" if
-    // self.records.get(&account_id) is not yet defined.
-    // Learn more: https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-optiont
-    pub fn get_greeting(&self, account_id: String) -> &str {
-        match self.records.get(&account_id) {
-            Some(greeting) => greeting,
-            None => "Hello",
+    pub fn get_a(&self, account_id: String) -> String {
+            match self.a_records.get(&account_id) {
+                Some(record) => record,
+                None => "".to_string(),
+            }
+    }
+
+    pub fn get_aaaa(&self, account_id: String) -> String {
+        match self.aaaa_records.get(&account_id) {
+            Some(record) => record,
+            None => "".to_string(),
         }
+
+    }
+
+    pub fn get_content_hash(&self, account_id: String) -> String {
+        match self.contenthash_records.get(&account_id) {
+            Some(record) => record,
+            None => "".to_string(),
+        }
+    }
+
+    pub fn get_txt(&self, account_id: String) -> String {
+        match self.txt_records.get(&account_id) {
+            Some(record) => record,
+            None => "".to_string(),
+        }
+    }
+
+    pub fn set_a(&mut self, a_record: String) {
+        //let account_id = env::signer_account_id();
+        let account_id = env::predecessor_account_id();
+        let mut action = "set";
+
+        // set A record for account_id
+        let empty_record = "".to_string();
+        let mut record = self.a_records.get(&a_record).unwrap_or(empty_record);
+        if !record.is_empty() {
+            action = "update";
+        }
+        record = a_record.clone();
+        self.a_records.insert(&account_id, &record);
+        
+        env::log(format!("{} A record '{}' for account '{}'", action, a_record, account_id,).as_bytes());
+    }
+
+    pub fn set_aaaa(&mut self, aaaa_record: String) {
+        //let account_id = env::signer_account_id();
+        let account_id = env::predecessor_account_id();
+        let mut action = "set";
+
+        // set AAAA record for account_id
+        let empty_record = "".to_string();
+        let mut record = self.aaaa_records.get(&aaaa_record).unwrap_or(empty_record);
+        if !record.is_empty() {
+            action = "update";
+        }
+        record = aaaa_record.clone();
+        self.aaaa_records.insert(&account_id, &record);
+
+        env::log(format!("{} AAAA record '{}' for account '{}'", action, aaaa_record, account_id,).as_bytes());
+    }
+
+    pub fn set_content_hash(&mut self, content_hash: String) {
+        //let account_id = env::signer_account_id();
+        let account_id = env::predecessor_account_id();
+        let mut action = "set";
+
+        // set Content Hash record for account_id
+        let empty_record = "".to_string();
+        let mut record = self.contenthash_records.get(&content_hash).unwrap_or(empty_record);
+        if !record.is_empty() {
+            action = "update";
+        }
+        record = content_hash.clone();
+        self.contenthash_records.insert(&account_id, &record);
+       
+        env::log(format!("{} content_hash record '{}' for account '{}'", action, content_hash, account_id,).as_bytes());
+    }
+
+    pub fn set_txt(&mut self, txt_record: String) {
+        //let account_id = env::signer_account_id();
+        let account_id = env::predecessor_account_id();
+        let mut action = "set";
+
+        // set TXT record for account_id
+        let empty_record = "".to_string();
+        let mut record = self.txt_records.get(&txt_record).unwrap_or(empty_record);
+        if !record.is_empty() {
+            action = "update";
+        }
+        record = txt_record.clone();
+        self.txt_records.insert(&account_id, &record);
+
+        env::log(format!("{} TXT record '{}' for account '{}'", action, txt_record, account_id,).as_bytes());
     }
 }
 
 /*
- * The rest of this file holds the inline tests for the code above
- * Learn more about Rust tests: https://doc.rust-lang.org/book/ch11-01-writing-tests.html
- *
  * To run from contract directory:
  * cargo test -- --nocapture
- *
- * From project root, to run in combination with frontend tests:
- * yarn test
- *
  */
 #[cfg(test)]
 mod tests {
@@ -90,26 +163,50 @@ mod tests {
     }
 
     #[test]
-    fn set_then_get_greeting() {
+    fn set_then_get_a() {
         let context = get_context(vec![], false);
         testing_env!(context);
-        let mut contract = Welcome::default();
-        contract.set_greeting("howdy".to_string());
+        let mut contract = NearDns::default();
+        contract.set_a("127.0.0.1".to_string());
         assert_eq!(
-            "howdy".to_string(),
-            contract.get_greeting("bob_near".to_string())
+            "127.0.0.1".to_string(),
+            contract.get_a("carol_near".to_string())
         );
     }
 
     #[test]
-    fn get_default_greeting() {
-        let context = get_context(vec![], true);
+    fn set_then_get_aaaa() {
+        let context = get_context(vec![], false);
         testing_env!(context);
-        let contract = Welcome::default();
-        // this test did not call set_greeting so should return the default "Hello" greeting
+        let mut contract = NearDns::default();
+        contract.set_aaaa("::1".to_string());
         assert_eq!(
-            "Hello".to_string(),
-            contract.get_greeting("francis.near".to_string())
+            "::1".to_string(),
+            contract.get_aaaa("carol_near".to_string())
+        );
+    }
+
+    #[test]
+    fn set_then_get_content_hash() {
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = NearDns::default();
+        contract.set_content_hash("ipfs_cid".to_string());
+        assert_eq!(
+            "ipfs_cid".to_string(),
+            contract.get_content_hash("carol_near".to_string())
+        );
+    }
+
+    #[test]
+    fn set_then_get_txt() {
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = NearDns::default();
+        contract.set_txt("txt".to_string());
+        assert_eq!(
+            "txt".to_string(),
+            contract.get_txt("carol_near".to_string())
         );
     }
 }
