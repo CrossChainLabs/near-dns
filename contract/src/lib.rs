@@ -3,8 +3,8 @@
  */
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{AccountId, env, near_bindgen, PanicOnDefault};
 use near_sdk::collections::UnorderedMap;
+use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -12,7 +12,7 @@ pub struct NearDns {
     a_records: UnorderedMap<AccountId, String>,
     aaaa_records: UnorderedMap<AccountId, String>,
     contenthash_records: UnorderedMap<AccountId, String>,
-    txt_records: UnorderedMap<AccountId, String>
+    txt_records: UnorderedMap<AccountId, String>,
 }
 
 #[near_bindgen]
@@ -23,15 +23,15 @@ impl NearDns {
             a_records: UnorderedMap::new(b"a".to_vec()),
             aaaa_records: UnorderedMap::new(b"b".to_vec()),
             contenthash_records: UnorderedMap::new(b"c".to_vec()),
-            txt_records: UnorderedMap::new(b"t".to_vec())
+            txt_records: UnorderedMap::new(b"t".to_vec()),
         }
     }
 
     pub fn get_a(&self, account_id: AccountId) -> String {
-            match self.a_records.get(&account_id) {
-                Some(record) => record,
-                None => "".to_string(),
-            }
+        match self.a_records.get(&account_id) {
+            Some(record) => record,
+            None => "".to_string(),
+        }
     }
 
     pub fn get_aaaa(&self, account_id: AccountId) -> String {
@@ -65,8 +65,14 @@ impl NearDns {
             "set"
         };
         self.a_records.insert(&account_id, &a_record);
-        
-        env::log_str(format!("{} A record '{}' for account '{}'", action, a_record, account_id,).as_str());
+
+        env::log_str(
+            format!(
+                "{} A record '{}' for account '{}'",
+                action, a_record, account_id,
+            )
+            .as_str(),
+        );
     }
 
     pub fn set_aaaa(&mut self, aaaa_record: String) {
@@ -80,7 +86,13 @@ impl NearDns {
         };
         self.aaaa_records.insert(&account_id, &aaaa_record);
 
-        env::log_str(format!("{} AAAA record '{}' for account '{}'", action, aaaa_record, account_id,).as_str());
+        env::log_str(
+            format!(
+                "{} AAAA record '{}' for account '{}'",
+                action, aaaa_record, account_id,
+            )
+            .as_str(),
+        );
     }
 
     pub fn set_content_hash(&mut self, content_hash: String) {
@@ -94,8 +106,14 @@ impl NearDns {
         };
 
         self.contenthash_records.insert(&account_id, &content_hash);
-       
-        env::log_str(format!("{} content_hash record '{}' for account '{}'", action, content_hash, account_id,).as_str());
+
+        env::log_str(
+            format!(
+                "{} content_hash record '{}' for account '{}'",
+                action, content_hash, account_id,
+            )
+            .as_str(),
+        );
     }
 
     pub fn set_txt(&mut self, txt_record: String) {
@@ -109,7 +127,13 @@ impl NearDns {
         };
         self.txt_records.insert(&account_id, &txt_record);
 
-        env::log_str(format!("{} TXT record '{}' for account '{}'", action, txt_record, account_id,).as_str());
+        env::log_str(
+            format!(
+                "{} TXT record '{}' for account '{}'",
+                action, txt_record, account_id,
+            )
+            .as_str(),
+        );
     }
 }
 
@@ -126,9 +150,11 @@ mod tests {
     fn carol() -> AccountId {
         AccountId::new_unchecked("carol_near".to_string())
     }
-    
+
     fn get_context() -> VMContext {
-        VMContextBuilder::new().predecessor_account_id(carol()).build()
+        VMContextBuilder::new()
+            .predecessor_account_id(carol())
+            .build()
     }
 
     #[test]
@@ -137,10 +163,7 @@ mod tests {
         testing_env!(context);
         let mut contract = NearDns::new();
         contract.set_a("127.0.0.1".to_string());
-        assert_eq!(
-            "127.0.0.1".to_string(),
-            contract.get_a(carol())
-        );
+        assert_eq!("127.0.0.1".to_string(), contract.get_a(carol()));
     }
 
     #[test]
@@ -149,10 +172,7 @@ mod tests {
         testing_env!(context);
         let mut contract = NearDns::new();
         contract.set_aaaa("::1".to_string());
-        assert_eq!(
-            "::1".to_string(),
-            contract.get_aaaa(carol())
-        );
+        assert_eq!("::1".to_string(), contract.get_aaaa(carol()));
     }
 
     #[test]
@@ -161,10 +181,7 @@ mod tests {
         testing_env!(context);
         let mut contract = NearDns::new();
         contract.set_content_hash("ipfs_cid".to_string());
-        assert_eq!(
-            "ipfs_cid".to_string(),
-            contract.get_content_hash(carol())
-        );
+        assert_eq!("ipfs_cid".to_string(), contract.get_content_hash(carol()));
     }
 
     #[test]
@@ -173,9 +190,6 @@ mod tests {
         testing_env!(context);
         let mut contract = NearDns::new();
         contract.set_txt("txt".to_string());
-        assert_eq!(
-            "txt".to_string(),
-            contract.get_txt(carol())
-        );
+        assert_eq!("txt".to_string(), contract.get_txt(carol()));
     }
 }
