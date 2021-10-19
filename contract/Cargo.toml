@@ -5,10 +5,10 @@ authors = ["CrossChainLabs"]
 edition = "2018"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = "1.0.1"
+near-sdk = "4.0.0-pre.4"
 
 [profile.release]
 codegen-units = 1
