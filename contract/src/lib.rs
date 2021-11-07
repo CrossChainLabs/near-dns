@@ -18,6 +18,19 @@ pub struct NearDns {
 #[near_bindgen]
 impl NearDns {
     #[init]
+
+    fn measure_cost_of_insertion(&mut self) {
+        let initial_storage_usage = env::storage_usage();
+        let tmp_account_id = AccountId::new_unchecked("a".repeat(64));
+        let tmp_account_record = "a".repeat(64);
+        self.a_records.insert(&tmp_account_id, &tmp_account_record);
+        self.aaaa_records.insert(&tmp_account_id, &tmp_account_record);
+        self.contenthash_records.insert(&tmp_account_id, &tmp_account_record);
+        self.txt_records.insert(&tmp_account_id, &tmp_account_record);
+        self.cost_of_insertion = env::storage_usage() - initial_storage_usage;
+        self.accounts.remove(&tmp_account_id);
+    }
+
     pub fn new() -> Self {
         Self {
             a_records: UnorderedMap::new(b"a".to_vec()),
@@ -25,6 +38,7 @@ impl NearDns {
             contenthash_records: UnorderedMap::new(b"c".to_vec()),
             txt_records: UnorderedMap::new(b"t".to_vec()),
         }
+        measure_cost_of_insertion()
     }
 
     pub fn get_a(&self, account_id: AccountId) -> String {
@@ -55,7 +69,16 @@ impl NearDns {
         }
     }
 
+    #[payable]
     pub fn set_a(&mut self, a_record: String) {
+        if env::attached_deposit() < self.cost_of_insertion {
+            env::panic_str(format!(
+                "attached deposit '{}' < cost_of_insertion '{}'",
+                env::attached_deposit(), self.cost_of_insertion,
+            )
+            .as_str(),)
+        }
+
         let account_id = env::predecessor_account_id();
 
         // set A record for account_id
@@ -75,7 +98,16 @@ impl NearDns {
         );
     }
 
+    #[payable]
     pub fn set_aaaa(&mut self, aaaa_record: String) {
+        if env::attached_deposit() < self.cost_of_insertion {
+            env::panic_str(format!(
+                "attached deposit '{}' < cost_of_insertion '{}'",
+                env::attached_deposit(), self.cost_of_insertion,
+            )
+            .as_str(),)
+        }
+
         let account_id = env::predecessor_account_id();
 
         // set AAAA record for account_id
@@ -95,7 +127,16 @@ impl NearDns {
         );
     }
 
+    #[payable]
     pub fn set_content_hash(&mut self, content_hash: String) {
+        if env::attached_deposit() < self.cost_of_insertion {
+            env::panic_str(format!(
+                "attached deposit '{}' < cost_of_insertion '{}'",
+                env::attached_deposit(), self.cost_of_insertion,
+            )
+            .as_str(),)
+        }
+
         let account_id = env::predecessor_account_id();
 
         // set Content Hash record for account_id
@@ -116,7 +157,16 @@ impl NearDns {
         );
     }
 
+    #[payable]
     pub fn set_txt(&mut self, txt_record: String) {
+        if env::attached_deposit() < self.cost_of_insertion {
+            env::panic_str(format!(
+                "attached deposit '{}' < cost_of_insertion '{}'",
+                env::attached_deposit(), self.cost_of_insertion,
+            )
+            .as_str(),)
+        }
+        
         let account_id = env::predecessor_account_id();
 
         // set TXT record for account_id
