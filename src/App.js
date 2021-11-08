@@ -2,9 +2,13 @@ import 'regenerator-runtime/runtime'
 import React from 'react'
 import { login, logout } from './utils'
 import './global.css'
+import Big from 'big.js';
 
 import getConfig from './config'
 const { networkId } = getConfig(process.env.NODE_ENV || 'development')
+
+const ATTACHED_GAS = Big(1).times(10 ** 13).toFixed();
+const ATTACHED_TOKENS = Big(1).times(10 ** 24).toFixed();
 
 export default function App() {
   // use React Hooks to store content_hash in component state
@@ -79,8 +83,10 @@ export default function App() {
             // make an update call to the smart contract
             await window.contract.set_content_hash({
               // pass the value that the user entered in the content_hash field
-              content_hash: newContentHash
-            })
+              content_hash: newContentHash,
+            },
+            ATTACHED_GAS,
+            ATTACHED_TOKENS)
           } catch (e) {
             alert(
               'Something went wrong! ' +
