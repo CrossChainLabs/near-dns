@@ -4,7 +4,7 @@
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
-use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault, StorageUsage};
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -13,32 +13,37 @@ pub struct NearDns {
     aaaa_records: UnorderedMap<AccountId, String>,
     contenthash_records: UnorderedMap<AccountId, String>,
     txt_records: UnorderedMap<AccountId, String>,
+    cost_of_insertion: StorageUsage,
 }
 
 #[near_bindgen]
 impl NearDns {
-    #[init]
-
     fn measure_cost_of_insertion(&mut self) {
         let initial_storage_usage = env::storage_usage();
         let tmp_account_id = AccountId::new_unchecked("a".repeat(64));
         let tmp_account_record = "a".repeat(64);
+        // a_records, aaaa_records, contenthash_records, and txt_records should all cost
+        // the same amount of storage, will use a_records
         self.a_records.insert(&tmp_account_id, &tmp_account_record);
-        self.aaaa_records.insert(&tmp_account_id, &tmp_account_record);
-        self.contenthash_records.insert(&tmp_account_id, &tmp_account_record);
-        self.txt_records.insert(&tmp_account_id, &tmp_account_record);
         self.cost_of_insertion = env::storage_usage() - initial_storage_usage;
-        self.accounts.remove(&tmp_account_id);
+        self.a_records.remove(&tmp_account_id);
     }
 
+    fn check_cost_of_insertion(&self) -> bool {
+        env::attached_deposit() < self.cost_of_insertion as u128
+    }
+
+    #[init]
     pub fn new() -> Self {
-        Self {
+        let mut this = Self {
             a_records: UnorderedMap::new(b"a".to_vec()),
             aaaa_records: UnorderedMap::new(b"b".to_vec()),
             contenthash_records: UnorderedMap::new(b"c".to_vec()),
             txt_records: UnorderedMap::new(b"t".to_vec()),
-        }
-        measure_cost_of_insertion()
+            cost_of_insertion: 0
+        };
+        this.measure_cost_of_insertion();
+        this
     }
 
     pub fn get_a(&self, account_id: AccountId) -> String {
@@ -71,7 +76,7 @@ impl NearDns {
 
     #[payable]
     pub fn set_a(&mut self, a_record: String) {
-        if env::attached_deposit() < self.cost_of_insertion {
+        if self.check_cost_of_insertion() {
             env::panic_str(format!(
                 "attached deposit '{}' < cost_of_insertion '{}'",
                 env::attached_deposit(), self.cost_of_insertion,
@@ -100,7 +105,7 @@ impl NearDns {
 
     #[payable]
     pub fn set_aaaa(&mut self, aaaa_record: String) {
-        if env::attached_deposit() < self.cost_of_insertion {
+        if self.check_cost_of_insertion() {
             env::panic_str(format!(
                 "attached deposit '{}' < cost_of_insertion '{}'",
                 env::attached_deposit(), self.cost_of_insertion,
@@ -129,7 +134,7 @@ impl NearDns {
 
     #[payable]
     pub fn set_content_hash(&mut self, content_hash: String) {
-        if env::attached_deposit() < self.cost_of_insertion {
+        if self.check_cost_of_insertion() {
             env::panic_str(format!(
                 "attached deposit '{}' < cost_of_insertion '{}'",
                 env::attached_deposit(), self.cost_of_insertion,
@@ -159,7 +164,7 @@ impl NearDns {
 
     #[payable]
     pub fn set_txt(&mut self, txt_record: String) {
-        if env::attached_deposit() < self.cost_of_insertion {
+        if self.check_cost_of_insertion() {
             env::panic_str(format!(
                 "attached deposit '{}' < cost_of_insertion '{}'",
                 env::attached_deposit(), self.cost_of_insertion,
@@ -204,6 +209,7 @@ mod tests {
     fn get_context() -> VMContext {
         VMContextBuilder::new()
             .predecessor_account_id(carol())
+            .attached_deposit(10000)
             .build()
     }
 
